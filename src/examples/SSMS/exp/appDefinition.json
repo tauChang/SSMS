@@ -1,0 +1,45 @@
+[
+  {
+    "name": "SSMS",
+    "module": [
+      {
+        "name": "Source",
+        "RAM": 1,
+        "Type": "SOURCE"
+      },
+      {
+        "name": "Calculator",
+        "RAM": 10,
+        "Type": "MODULE"
+      },
+      {
+        "name": "Actuator",
+        "RAM": 1,
+        "Type": "SINK"
+      }
+    ],
+    "message": [
+      {
+        "name": "Task",
+        "src": "Source",
+        "dst": "Calculator",
+        "instructions": 50000000,
+        "bytes": 150000
+      },
+      {
+        "name": "Result",
+        "src": "Calculator",
+        "dst": "Actuator",
+        "instructions": 10000000,
+        "bytes": 50000
+      }
+    ],
+    "service": [
+      {
+        "module": "Calculator",
+        "message_in": "Task",
+        "message_out": "Actuator"
+      }
+    ]
+  }
+]

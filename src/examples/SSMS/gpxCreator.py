@@ -1,48 +1,13 @@
+"""
+This script is tested and ran only using Python 3.7.9 on MacOS.
+"""
+
 from lxml import etree
 from datetime import datetime, timedelta
 import math
 import geopy
 import geopy.distance
-
-def calculate_initial_compass_bearing(pointA, pointB):
-    """
-    Credit: https://gist.github.com/jeromer/2005586
-
-    Calculates the bearing between two points.
-    The formulae used is the following:
-        θ = atan2(sin(Δlong).cos(lat2),
-                  cos(lat1).sin(lat2) − sin(lat1).cos(lat2).cos(Δlong))
-    :Parameters:
-      - `pointA: The tuple representing the latitude/longitude for the
-        first point. Latitude and longitude must be in decimal degrees
-      - `pointB: The tuple representing the latitude/longitude for the
-        second point. Latitude and longitude must be in decimal degrees
-    :Returns:
-      The bearing in degrees
-    :Returns Type:
-      float
-    """
-    if (type(pointA) != tuple) or (type(pointB) != tuple):
-        raise TypeError("Only tuples are supported as arguments")
-
-    lat1 = math.radians(pointA[0])
-    lat2 = math.radians(pointB[0])
-
-    diffLong = math.radians(pointB[1] - pointA[1])
-
-    x = math.sin(diffLong) * math.cos(lat2)
-    y = math.cos(lat1) * math.sin(lat2) - (math.sin(lat1)
-            * math.cos(lat2) * math.cos(diffLong))
-
-    initial_bearing = math.atan2(x, y)
-
-    # Now we have the initial bearing but math.atan2 return values
-    # from -180° to + 180° which is not what we want for a compass bearing
-    # The solution is to normalize the initial bearing as shown below
-    initial_bearing = math.degrees(initial_bearing)
-    compass_bearing = (initial_bearing + 360) % 360
-
-    return compass_bearing
+from coordinateToolkit import *
 
 class Track:
     def __init__(self, start_time = datetime.now(), end_time = datetime.now(), start_coord = {"lat": 25.0167, "lng": 121.5333}, direction_coord = {"lat": 25.0167, "lng": 121.5333}, trkpt_time_interval = 60, moving_speed=60, bearing=None):
@@ -69,7 +34,7 @@ class Track:
         if direction_coord == None:
             self.bearing = bearing
         else:
-            self.bearing = calculate_initial_compass_bearing(
+            self.bearing = calculate_bearing(
                 (start_coord["lat"], start_coord["lng"]), 
                 (direction_coord["lat"], direction_coord["lng"])
             )
@@ -134,19 +99,20 @@ class Track:
 # User input -----------------------------------------------------
 car_count = 10
 start_time = datetime(2020, 10, 10, 10, 0, 0)
-end_time = datetime(2020, 10, 10, 11, 0, 0)
+end_time = datetime(2020, 10, 10, 10, 10, 0)
 first_car_start_coord = {"lat": 24, "lng": 121}
 direction_coord = {"lat": 25, "lng": 121}
-trkpt_time_interval=120 # seconds
+trkpt_time_interval=1 # seconds
 moving_speed=60 # km/h
-car_distance = 2 # km
+car_distance = 0.5 # km
 gpx_tag_attribute = {}
-file_path = "/Users/TommyChang/Desktop/So Simple Mobilility Simulation/src/examples/SSMS/Tracks/track"  # will be appended with _0.gpx, _1.gpx, ...
+directory_path = "/Users/TommyChang/Desktop/So Simple Mobility Simulation/src/examples/SSMS/exp/trajectories/"  # will be appended with _0.gpx, _1.gpx, ...
+first_car_id = 10000 # Will be used as the file name. The second car will be first_car_id + 1, etc.
 
 # User input end -------------------------------------------------
 
 gpx_list = []
-bearing = calculate_initial_compass_bearing(
+bearing = calculate_bearing(
     (direction_coord["lat"], direction_coord["lng"]),
     (first_car_start_coord["lat"], first_car_start_coord["lng"])
     )
@@ -174,7 +140,7 @@ for i in range(0, car_count):
 
 
 for i in range(0, car_count):
-    file_name = file_path + "_%d.gpx" %i 
+    file_name = directory_path + "/%d.gpx" %(first_car_id + i) 
     f = open(file_name, "w")
     f.write(etree.tostring(gpx_list[i], pretty_print=True, encoding="unicode"))
     f.close()

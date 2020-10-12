@@ -33,12 +33,14 @@ class MovementUpdate:
 
 
     def get_last_points(self, df, step):
+        # Tau: Get next position of mobile for this step
 
         tt = df[df.VideoFrame == step]
         coordinates = {}
 
         for row in tt.iterrows():
-            code = str(row[1]["CodeRoute"])
+            #print("HEY HERE => ", row)
+            code = str(row[1]["CodeRoute"]) #e.g. 6711313
             lat = row[1]["Latitude"]
             lng = row[1]["Longitude"]
             coordinates[code] = (lat, lng)
@@ -55,15 +57,15 @@ class MovementUpdate:
         It changes the topology connections
         Args:
             sim:
-            code:
-            id_node:
+            code: deal with this node
+            id_node: new node to connect to
 
         Returns:
 
         """
         # 1 - remove previous edge (in case)
 
-        # print " Removing edges of node: %s" %code
+        print " Removing edges of node: %s" %code
         edge = ()
         #TODO Improve a dynamic assignament of BW / PR (edge link properties)
         att = {"BW": 10,"PR": 10}
@@ -71,6 +73,7 @@ class MovementUpdate:
             existNode = False
             edges_to_remove = [e for e in sim.topology.G.edges() if int(code) in e]
             for edge in edges_to_remove:
+                print("REMOVING ", edge[0], " -> ", edge[1])
                 att = sim.topology.G[edge[0]][edge[1]]
                 sim.topology.G.remove_edge(*edge)
                 existNode = True
@@ -92,7 +95,7 @@ class MovementUpdate:
 
 
         # 2 - add new edge
-        # print "a new link between nodes: %s -> %s"%(code,id_node)
+        print "a new link between nodes: %s -> %s"%(code,id_node)
         if id_node!= None:
             if type(id_node)==list:
                 for id_n in id_node:
@@ -111,7 +114,7 @@ class MovementUpdate:
 
         Args:
             sim: Simulator
-            routing: selection strategy
+            routing: selection strategy (Tau: seems of no use)
             case: name of the simulation to show results
             stop_time: finalization time of the simulation
             it: int to identify the iteration
@@ -160,6 +163,7 @@ class MovementUpdate:
             all_endpoints = sim.endpoints
         else:
             all_endpoints = np.concatenate((sim.endpoints, mobile_endpoints), axis=0)
+        # Tau: all_endpoints is all nodes (including the two cars and 5 stable nodes) capable of processing
         sim.coverage.update_coverage_of_endpoints(sim.map, all_endpoints)
 
         # We update connections between mobile_entities with the network
@@ -173,37 +177,44 @@ class MovementUpdate:
                 point_index = sim.coverage.connection(new_point)
                 if point_index != None:
                     all_current_connection[code] = self.name_endpoints[point_index]
+        # Tau: now `all_current_connection` is filled with each mobile entity's new connection to the nodes in `all_endpoints`
 
         ##########
         # UPDATING CONNECTIONS of MOBILE ENDPOINTS  with NETWORK ENDPOINTS
         #
         fixed_location_endpoints = dict(zip(sim.name_endpoints.values(), sim.endpoints))
-        mobile_location_endpoints = dict(zip(code_mobile_endpoints, mobile_endpoints))
+        mobile_location_endpoints = dict(zip(code_mobile_endpoints, mobile_endpoints)) # Tau: the two cars
 
         print "STEP ",self.current_step
         # print "FIX"
         # print fixed_location_endpoints
         # print "MOB"
         # print mobile_location_endpoints
+        
+        # Tau: circle coverage:
         connection_mobiles = sim.coverage.connection_between_mobile_entities(fixed_location_endpoints,
-                                                                             mobile_location_endpoints,sim.mobile_fog_entities)
+                                                                            mobile_location_endpoints,sim.mobile_fog_entities)
+        # Tau:voronoi coverage:
+        #connection_mobiles = sim.coverage.connection_between_mobile_entities(fixed_location_endpoints,
+        #                                                                    mobile_location_endpoints)
 
         # we merge both type of connections to generate the graph
         for k in connection_mobiles:
-            all_current_connection[k]=connection_mobiles[k]
-
+            all_current_connection[k]=connection_mobiles[k]  
+        # Tau: `all_current_connection` has all connection of cars (both fog and non-fog) to network endpoints (either fixed or mobile)
+        
         # we detect the elements without a current disconection
         previous_code = set(all_current_connection)
         without_connection = [x for x in self.previous_graph_connection if x not in previous_code]
 
         # DEBUGING CODE
-        # if self.current_step >= 31 and self.current_step<41:
-        #     print "CURRENT CONNECTION "
-        #     print all_current_connection
-        #     print "PREVIOUS "
-        #     print self.previous_graph_connection
-        #     print "WITHOUT CONNECTION"
-        #     print without_connection
+        if self.current_step >= 31 and self.current_step<41:
+            print "CURRENT CONNECTION "
+            print all_current_connection
+            print "PREVIOUS "
+            print self.previous_graph_connection
+            print "WITHOUT CONNECTION"
+            print without_connection
 
 
         # updating previous network connections with the current ones
@@ -211,6 +222,7 @@ class MovementUpdate:
         changes = False
         for k in all_current_connection:
             if not k in self.previous_graph_connection.keys():
+                # Tau: previously no connnection, but now with connection
                 self.previous_graph_connection[k] = all_current_connection[k]
                 self.update_topology_connections(sim, k, self.previous_graph_connection[k], routing)
                 changes = True
@@ -229,6 +241,7 @@ class MovementUpdate:
 
         # updating elements without a current connection: removing edges
         for k in without_connection:
+            # Tau: previously with connection, but now no connection
             self.update_topology_connections(sim, k, None, routing)
             del self.previous_graph_connection[k]
 
