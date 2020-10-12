@@ -79,9 +79,11 @@ class CircleCoverage(Coverage):
             points:
 
         """
+
         self.points = points
         self.points_to_map = [map.to_pixels(p[0], p[1]) for p in self.points]
-
+        print "WTF IS THIS"
+        print self.points_to_map
         self.regions_to_map = [Circle((region[0], region[1]), self.radius_on_coordinates) for region in self.points_to_map]
 
         self.colors_cells = self.cmap(np.linspace(0., 1., len(self.points)))[:, :3]
@@ -137,6 +139,9 @@ class CircleCoverage(Coverage):
             dict {code_mobility_entity : id_node}
 
         """
+        print fixed_endpoints
+        print mobile_endpoints
+        print mobile_fog_entities
         result = {}
 
         for code in mobile_fog_entities:
@@ -180,7 +185,7 @@ class CircleCoverage(Coverage):
 
 
 
-    def __geodesic_point_buffer(self, lon, lat, km):
+    def __geodesic_point_buffer(self, lat, lon, km): # a fucking bug
         """
         Based on: https://gis.stackexchange.com/questions/289044/creating-buffer-circle-x-kilometers-from-point-using-python
 

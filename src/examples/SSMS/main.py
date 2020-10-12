@@ -5,6 +5,10 @@
     @author: Isaac Lera & Carlos Guerrero
 
 """
+import matplotlib
+
+matplotlib.use('Agg') # Tau: for drawing
+
 import os
 import time
 import json
@@ -42,7 +46,6 @@ def create_applications_from_json(data):
     for app in data:
         # Create application
         a = Application(name=app["name"])
-
         # Set modules
         modules = []
         for module in app["module"]:
@@ -55,8 +58,8 @@ def create_applications_from_json(data):
             # print "Creando mensaje: %s" %message["name"]
             ms[message["name"]] = Message(message["name"], message["src"], message["dst"],
                                           instructions=message["instructions"], bytes=message["bytes"])
-            #if message["s"] == "None":
-            #    a.add_source_messages(ms[message["name"]])
+            if message["src"] == "Source":
+                a.add_source_messages(ms[message["name"]])
 
         for idx, message in enumerate(app["service"]):
             if "message_out" in message.keys():
@@ -79,7 +82,7 @@ def main(path, path_results, number_simulation_steps, tracks, topology, case, it
     APPLICATION
     """
     dataApp = json.load(open(path + 'appDefinition.json'))
-    apps = create_applications_from_json(dataApp)
+    app = create_applications_from_json(dataApp)["SSMS"] # since we only have one application now
 
     """
     PLACEMENT algorithm
@@ -111,20 +114,20 @@ def main(path, path_results, number_simulation_steps, tracks, topology, case, it
     Deploying application with specific distribution in the simulator
     # Penultimate phase
     """
-    for aName in apps.keys():
-        s.deploy_app(apps[aName], placement, pop, selector)
+    s.deploy_app(app, placement, pop, selector)
 
     """
     MOBILE - parametrization
     """
     s.load_user_tracks(tracks)
+
     s.set_coverage_class(CircleCoverage, radius=0.5)  # radius in KM
     # s.set_coverage_class(Voronoi)
-    # s.set_mobile_fog_entities(mobile_fog_entities)
+    s.set_mobile_fog_entities({})
 
     # Expensive task
     # It generates a short video (mp4) with the movement of users in the coverage (without network update)
-    s.generate_animation(path_results+"animation_%s" % case)
+    #s.generate_animation(path_results+"animation_%s" % case)
 
     """
     Creating the custom monitor that manages the movement of mobile entities
@@ -139,6 +142,9 @@ def main(path, path_results, number_simulation_steps, tracks, topology, case, it
 
     s.set_movement_control(evol)
 
+    print "ENDPOINTS:"
+    print s.name_endpoints.values()
+    print s.endpoints
     """
     RUNNING
     """
@@ -167,12 +173,10 @@ def do_video_from_execution_snaps(output_file, png_names, framerate):
 
 
 if __name__ == '__main__':
-    wd_path = os.getcwd()
-
     # Logging can be avoided by commenting these three lines
     import logging.config
 
-    logging.config.fileConfig(wd_path + '/logging.ini')
+    logging.config.fileConfig('/Users/TommyChang/Desktop/So Simple Mobility Simulation/src/logging.ini')
     #
 
     ##
@@ -181,7 +185,6 @@ if __name__ == '__main__':
     ##
 
     # As we perform the simulations in external server, we simplify the path value according with the WD_path
-    print (wd_path)
     experiment_path = "/Users/TommyChang/Desktop/So Simple Mobility Simulation/src/examples/SSMS/exp/"
     print "Experiment Path ", experiment_path
     #
@@ -189,7 +192,7 @@ if __name__ == '__main__':
     # Experiment variables
     nSimulations = 1
     number_simulation_steps = 10
-    time_in_each_step = 1000  # 隔多久 network topology 被 update 一次
+    time_in_each_step = 1000  # the interval of how long the network topology is updated
 
     datestamp = time.strftime('%Y%m%d')
     datestamp = "20201012"
@@ -225,6 +228,8 @@ if __name__ == '__main__':
     t = Topology()
     dataNetwork = json.load(open(experiment_path + 'networkDefinition.json'))
     t.load_all_node_attr(dataNetwork)
+    print "T.G.NODE"
+    print t.G.nodes
 
     # Performing multiple simulations
     for i in range(nSimulations):

@@ -96,7 +96,7 @@ fog_server_config = {
     "model": "fog-server",
     "IPT": 800000,
     "RAM": 100,
-    "level": 1 # Not sure if would be used in SMSS
+    "level": 0 # Note, network endpoints should be level 0
 }
 
 car_count = 10
@@ -109,7 +109,7 @@ car_config = {
     "model": "car",
     "IPT": 1000, # doesn't matter
     "RAM": 1,  # doesn't matter
-    "level": 1 # Not sure if would be used in SMSS
+    "level": -1 
 }
 
 # Link

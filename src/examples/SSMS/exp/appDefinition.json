@@ -8,7 +8,7 @@
         "Type": "SOURCE"
       },
       {
-        "name": "Calculator",
+        "name": "Computation",
         "RAM": 10,
         "Type": "MODULE"
       },
@@ -22,13 +22,13 @@
       {
         "name": "Task",
         "src": "Source",
-        "dst": "Calculator",
+        "dst": "Computation",
         "instructions": 50000000,
         "bytes": 150000
       },
       {
         "name": "Result",
-        "src": "Calculator",
+        "src": "Computation",
         "dst": "Actuator",
         "instructions": 10000000,
         "bytes": 50000
@@ -36,9 +36,9 @@
     ],
     "service": [
       {
-        "module": "Calculator",
+        "module": "Computation",
         "message_in": "Task",
-        "message_out": "Actuator"
+        "message_out": "Result"
       }
     ]
   }

@@ -36,7 +36,7 @@ except ImportError:
 # Third party modules
 import matplotlib
 
-# matplotlib.use('Agg')
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt  # Attention: include the .use('agg') before importing pyplot: DISPLAY issues
 import mplleaflet
 import numpy as np
@@ -318,7 +318,6 @@ class AnimationTrack:
 
     def make_snap(self, step, output_file="None",draw_connection_line=False,G=None):
         self.track_code_last_position = self.get_all_points_from_videoframe(step)
-
         self.axarr.texts = []
         self.clear_frequency()
         self.update_coverage_regions()

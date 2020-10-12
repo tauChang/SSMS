@@ -1188,10 +1188,10 @@ class Sim:
 
     def __load_map(self):
         trk_bounds = self.user_tracks.get_bounds()
-        min_lat = trk_bounds.min_latitude
-        max_lat = trk_bounds.max_latitude
-        min_lng = trk_bounds.min_longitude
-        max_lng = trk_bounds.max_longitude
+        min_lat = trk_bounds.min_latitude - 0.1
+        max_lat = trk_bounds.max_latitude + 0.1
+        min_lng = trk_bounds.min_longitude - 0.1
+        max_lng = trk_bounds.max_longitude + 0.1
 
         self.map = smopy.Map((min_lat, min_lng, max_lat, max_lng), z=12)
 
@@ -1206,14 +1206,15 @@ class Sim:
         pos = 0
         for n in level:
             if level[n] == 0:
-                self.endpoints.append([lat[n], lng[n]])
+                self.endpoints.append([lat[n], lng[n]]) # here's a fucking bugggg
                 self.name_endpoints[pos]=n
                 pos +=1
         self.endpoints = np.array(self.endpoints)
 
 
     def set_coverage_class(self, class_name,**kwargs):
-        if len(self.endpoints)==0: self.__update_connection_points()
+        if len(self.endpoints)==0: 
+            self.__update_connection_points()
         if self.map == None: self.__load_map()
 
         self.coverage = class_name(self.map,self.endpoints,**kwargs)

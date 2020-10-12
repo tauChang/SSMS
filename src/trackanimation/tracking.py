@@ -499,20 +499,21 @@ class DFTrack:
         n_fps = time * framerate
         df = df.sort_values('Date')
         df_cum = trk_utils.calculate_cum_time_diff(df)
+        # Tau: df_cum has an extra column "CumTimeDiff", which calculates the cumulative time differency BY GROUP
         grouped = df_cum['CodeRoute'].unique()
 
         df_norm = pd.DataFrame()
-        point_idx = 1
+        point_idx = 1 # Tau: not sure what this does, it's only used when no points are in a certain videoframe, refer to below 
 
         for name in tqdm(grouped, desc='Groups'):
             df_slice = df_cum[df_cum['CodeRoute'] == name]
             time_diff = float(
                 (df_slice[['TimeDifference']].sum() / time) / framerate)  # Track duration divided by time and framerate
 
-            df_range = df_slice[df_slice['CumTimeDiff'] == 0]
-            df_range = df_range.reset_index(drop=True)
-            df_range['VideoFrame'] = 0
-            df_norm = pd.concat([df_norm, df_range])
+            df_range = df_slice[df_slice['CumTimeDiff'] == 0] # Tau: the first row of this group
+            df_range = df_range.reset_index(drop=True) # Tau: drop the CodeRoute column
+            df_range['VideoFrame'] = 0 # Tau: new column
+            df_norm = pd.concat([df_norm, df_range]) # Tau: concat to our result
 
             for i in tqdm(range(1, n_fps + 1), desc='Num FPS', leave=False):
                 x_start = time_diff * (i - 1)
@@ -520,6 +521,7 @@ class DFTrack:
 
                 df_range = df_slice[(df_slice['CumTimeDiff'] > x_start) & (df_slice['CumTimeDiff'] <= x_end)]
                 df_range = df_range.reset_index(drop=True)
+                # Tau: find the rows where their cumTimeDiff is between x_start and x_end
 
                 if df_range.empty:
                     df_start = df_slice[df_slice['CumTimeDiff'] <= x_start].tail(1)
@@ -536,6 +538,7 @@ class DFTrack:
                 df_range['VideoFrame'] = i
                 df_norm = pd.concat([df_norm, df_range])
         df_norm = df_norm.reset_index(drop=True)
+        print df_norm.columns
 
         return self.__class__(df_norm, list(df_norm))
 
@@ -694,6 +697,9 @@ class ReadTrack:
         return self.read_gpx_file(filename)
 
     def read_gpx_file(self, filename):
+        """
+        Read a single gpx file
+        """
         try:
             with open(filename, "r") as f:
                 prev_point = None
@@ -738,6 +744,9 @@ class ReadTrack:
         if self.directory_or_file.lower().endswith('.gpx'):
             self.read_gpx_file(self.directory_or_file)
         else:
+            """
+            Tau: read from a directory
+            """
             n_file_read = 1
             for file in tqdm(glob.glob(self.directory_or_file + "*.gpx"), desc='Reading files'):
                 try:

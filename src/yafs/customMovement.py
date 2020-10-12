@@ -178,7 +178,6 @@ class MovementUpdate:
                 if point_index != None:
                     all_current_connection[code] = self.name_endpoints[point_index]
         # Tau: now `all_current_connection` is filled with each mobile entity's new connection to the nodes in `all_endpoints`
-
         ##########
         # UPDATING CONNECTIONS of MOBILE ENDPOINTS  with NETWORK ENDPOINTS
         #
@@ -208,7 +207,7 @@ class MovementUpdate:
         without_connection = [x for x in self.previous_graph_connection if x not in previous_code]
 
         # DEBUGING CODE
-        if self.current_step >= 31 and self.current_step<41:
+        if True:
             print "CURRENT CONNECTION "
             print all_current_connection
             print "PREVIOUS "
@@ -241,6 +240,8 @@ class MovementUpdate:
 
         # updating elements without a current connection: removing edges
         for k in without_connection:
+            print "KKKKKK"
+            print k
             # Tau: previously with connection, but now no connection
             self.update_topology_connections(sim, k, None, routing)
             del self.previous_graph_connection[k]
