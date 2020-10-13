@@ -4,7 +4,7 @@ A simple implementation of simulation of vehicular network offloading using [YAF
 ## Running Simulation
 Run the bash script `src/run.sh`. Please remember to change the path.
 
-To deactivate offloading, please comment out line 617 and 618 in `src/yafs/core.py`.
+To deactivate offloading, please comment out line 580 and 581 in `src/yafs/core.py`.
 To generate animation, please uncoment line 132 in `src/examples/SSMS/main.py`.
 
 ## Simulation Environment

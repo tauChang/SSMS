@@ -23,6 +23,9 @@ class DeviceSpeedAwareRouting(Selection):
             for dev in DES_dst:
                 #print "DES :",dev
                 node_dst = alloc_DES[dev]
+                if(node_dst == node_src):
+                # This message is offloaded
+                    continue
                 path = list(nx.shortest_path(sim.topology.G, source=node_src, target=node_dst))
                 long = len(path)
 

@@ -420,11 +420,12 @@ class Sim:
 
         self.logger.debug("STOP_Process - Module Pure Source\t#DES:%i" % idDES)
 
-    def __update_node_metrics(self, app, module, message, des, type):
+    def __update_node_metrics(self, app, module, message, des, type, sourceDES=-1):
         try:
             """
             It computes the service time in processing a message and record this event
             """
+            # if False:  # Tau: actuator still processes (could be discussed)
             if module in self.apps[app].get_sink_modules():
                 """
                 The module is a SINK (Actuactor)
@@ -441,44 +442,15 @@ class Sim:
                 att_node = self.topology.G.nodes[id_node]
 
                 time_service = message.inst / float(att_node["IPT"])
-
+                print message.inst
+                print float(att_node["IPT"])
+                print "TIME_SERVICE: "
+                print time_service
 
             """
             it records the entity.id who sends this message
             """
-            # if not message.path:
-            #     from_id_source = id_node  # same src like dst
-            # else:
-            #     from_id_source = message.path[0]
-            #
-     # # if message.id == 1072:
-     #        print "-"*50
-     #        print "Module: ",module # module that receives the request (RtR)
-     #        print "DES ",des # DES process who RtR
-     #        print "ID MODULE: ",id_node  #Topology entity who RtR
-     #        print "Message.name ",message.name # Message name
-     #        print "Message.id ", message.id #Message generator id
-     #        print "Message.path ",message.path #enrouting path
-     #        print "Message src ",message.src #module source who send the request
-     #        print "Message dst ",message.dst #module dst (the entity that RtR)
-     #        print "Message idDEs ",message.idDES #DES intermediate process that process the request
-     #        print "TOPO.src ", message.path[0] #entity that RtR
-     #        print "TOPO.dst ", int(self.alloc_DES[des]) #DES process that RtR
-     #        print "time service ",time_service
-     #        exit()
-
-     #
-            # # print "MODULE: ",self.alloc_module[app][module]
-            # # tmp = []
-            # # for it in self.alloc_module[app][module]:
-            # #     tmp.append(self.alloc_DES[it])
-            # # print "ALLOC:  ", tmp
-            # # print "PATH 0: " ,message.path[0]
-
-
-
-            #WARNING. If there are more than two equal modules deployed in the same entity, it will not be possible to determine which process sent this package at this point. That information will have to be calculated by the trace of the message (message.id)
-            sourceDES = -1
+            # sourceDES = -1  Tau: put to parameter
             try:
                 DES_possible = self.alloc_module[app][message.src]
                 for eDES in DES_possible:
@@ -489,13 +461,11 @@ class Sim:
                     if self.alloc_source[k]['id'] == message.path[0]:
                         sourceDES = k
 
-            # print "Source DES ",sourceDES
-            # print "-" * 50
-
-            ### OFFLOAD ###
+            # Tau: for offloading
             if type == self.OFFLOAD_METRIC:
                 time_service = 0
-            ###############
+            # print "Source DES ",sourceDES
+            # print "-" * 50
 
             self.metrics.insert(
                 {"id":message.id,"type": type, "app": app, "module": module, "message": message.name,
@@ -504,21 +474,14 @@ class Sim:
 
                  "service": time_service, "time_in": self.env.now,
                  "time_out": time_service + self.env.now, "time_emit": float(message.timestamp),
-                 "time_reception": float(message.timestamp_rec)
-
-                 })
-
+                 "time_reception": float(message.timestamp_rec)})
+                
             return time_service
         except KeyError:
             # The node can be removed
             self.logger.critical("Make sure that this node has been removed or it has all mandatory attributes - Node: DES:%i" % des)
             return 0
 
-
-        # self.logger.debug("TS[%s] - DES: %i - %d"%(module,des,time_service))
-        # except:
-        #     self.logger.warning("This module has been removed previously to the arrival time of this message. DES: %i"%des)
-        #     return 0
 
     """
     MEJORAR - ASOCIAR UN PROCESO QUE LOS CONTROLES®.
@@ -650,10 +613,12 @@ class Sim:
                         #It records once
                         if not doBefore:
                             self.logger.debug(
-                                "(App:%s#DES:%i#%s)\tModule - Recording the message:\t%s" % (app_name, ides, module, msg.name))
+                                "(App:%s#DES:%i#%s)\tModule - Recording the message:\t%s ID: %i" % (app_name, ides, module, msg.name, msg.id))
                             type = self.NODE_METRIC
-
-                            service_time = self.__update_node_metrics(app_name, module, msg, ides, type)
+                            sourceDES = -1
+                            if msg.last_idDes:
+                                sourceDES = msg.last_idDes[-1]
+                            service_time = self.__update_node_metrics(app_name, module, msg, ides, type, sourceDES=sourceDES)
 
                             yield self.env.timeout(service_time)
                             doBefore = True

@@ -90,7 +90,7 @@ def main(path, path_results, number_simulation_steps, tracks, topology, case, it
     PLACEMENT algorithm
     """
     # In our model only initial cloud placements are enabled
-    placement = CloudPlacement(name="CloudPlacement")
+    placement = FogPlacement(name="FogPlacement")
     placement.scaleService({"Computation": 1}) # Tau: Not really sure about the number
 
     """
@@ -144,9 +144,6 @@ def main(path, path_results, number_simulation_steps, tracks, topology, case, it
 
     s.set_movement_control(evol)
 
-    print "ENDPOINTS:"
-    print s.name_endpoints.values()
-    print s.endpoints
     """
     RUNNING
     """
@@ -198,7 +195,7 @@ if __name__ == '__main__':
 
     datestamp = time.strftime('%Y%m%d')
     datestamp = "20201012"
-    temporal_folder = experiment_path + "results_" + "cloud_no_offloading" + "/" #datestamp + "/"
+    temporal_folder = experiment_path + "results_" + "fog_offloading" + "/" #datestamp + "/"
 
     trajectories_path = experiment_path + "/trajectories/"
 
