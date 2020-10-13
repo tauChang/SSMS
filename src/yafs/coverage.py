@@ -82,8 +82,6 @@ class CircleCoverage(Coverage):
 
         self.points = points
         self.points_to_map = [map.to_pixels(p[0], p[1]) for p in self.points]
-        print "WTF IS THIS"
-        print self.points_to_map
         self.regions_to_map = [Circle((region[0], region[1]), self.radius_on_coordinates) for region in self.points_to_map]
 
         self.colors_cells = self.cmap(np.linspace(0., 1., len(self.points)))[:, :3]

@@ -57,6 +57,9 @@ class Sim:
     FORWARD_METRIC = "FWD_M"
     SINK_METRIC = "SINK_M"
     LINK_METRIC = "LINK"
+    ### OFFLOAD ###
+    OFFLOAD_METRIC = "OFFLOAD_M"
+    ###############
 
     def __init__(self, topology, name_register='events_log.json', link_register='links_log.json', redis=None, purge_register=True, logger=None, default_results_path=None):
 
@@ -489,6 +492,11 @@ class Sim:
             # print "Source DES ",sourceDES
             # print "-" * 50
 
+            ### OFFLOAD ###
+            if type == self.OFFLOAD_METRIC:
+                time_service = 0
+            ###############
+
             self.metrics.insert(
                 {"id":message.id,"type": type, "app": app, "module": module, "message": message.name,
                  "DES.src": sourceDES, "DES.dst":des,"module.src": message.src,
@@ -555,6 +563,42 @@ class Sim:
 
         self.logger.debug("STOP_Process - Module Source: %s\t#DES:%i" % (module, idDES))
 
+    def __offload(self, ides, app_name, module, offload_threshold):
+        """
+        offload_threshold: the maximum amount of requests in queue
+        """
+        thisNode = self.alloc_DES[ides]
+        i = offload_threshold
+        queueSize = len(self.consumer_pipes["%s%s%i"%(app_name,module,ides)].items)
+        print "QUEUE: "
+        for m in self.consumer_pipes["%s%s%i"%(app_name,module,ides)].items:
+            print m.id
+        print "QUEUESIZE: "
+        print queueSize
+        while i < queueSize:
+            msg = self.consumer_pipes["%s%s%i"%(app_name,module,ides)].items[i]
+            self.logger.debug(
+                "(App:%s#DES:%i#%s)\tModule - Recording the message:\t%s ID: %i" % (app_name, ides, module, msg.name, msg.id))
+            self.__update_node_metrics(app_name, module, msg, ides, self.OFFLOAD_METRIC) # service time = 0
+
+            # Deal with offloading
+            self.logger.debug(
+            "(App:%s#DES:%i#%s)\tModule - Full buffer of node %i:\t%s" % (app_name, ides, module, thisNode, msg.name))
+        
+            print "OFFLOADED MSG: "
+            print msg
+            # Tau: don't know why shallow copy doesnt affect register["message_in"]
+            msg_out = copy.copy(msg)
+            msg_out.id = msg.id
+            msg_out.timestamp = self.env.now
+            msg_out.last_idDes = copy.copy(msg.last_idDes)
+            msg_out.last_idDes.append(ides)
+            self.__send_message(app_name, msg_out, ides, self.FORWARD_METRIC)
+            i += 1
+
+        # Trim queue
+        self.consumer_pipes["%s%s%i"%(app_name,module,ides)].items = \
+            self.consumer_pipes["%s%s%i"%(app_name,module,ides)].items[:offload_threshold]
 
     def __add_consumer_module(self, ides, app_name, module, register_consumer_msg):
         """
@@ -565,8 +609,15 @@ class Sim:
             if self.des_process_running[ides]:
                 msg = yield self.consumer_pipes["%s%s%i"%(app_name,module,ides)].get()
                 # One pipe for each module name
+                
+                ### OFFLOAD ###
+                OFFLOAD_THRESHOLD = 10  # Note: so at the same time, this node holds at most OFFLOAD_THRESHOLD + 1 (the one being processed right now) requests
 
-                m = self.apps[app_name].services[module]
+                #if queueSize >= OFFLOAD_THRESHOLD: # Note: the time it takes to make decision is ignored
+                if module == "Computation":
+                    self.__offload(ides, app_name, module, OFFLOAD_THRESHOLD)
+                
+                ################
 
                 # for ser in m:
                 #     if "message_in" in ser.keys():

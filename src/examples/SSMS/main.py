@@ -23,7 +23,7 @@ import random
 import numpy as np
 from collections import Counter
 
-from yafs.core import Sim
+
 from yafs.application import Application, Message
 from yafs.topology import Topology
 from yafs.distribution import *
@@ -35,6 +35,8 @@ from yafs.utils import *
 from yafs.customMovement import MovementUpdate
 
 import trackanimation
+
+from yafs.core import Sim
 
 from yafs.population import *  # for population
 from customSelection import DeviceSpeedAwareRouting  # for selection
@@ -88,7 +90,7 @@ def main(path, path_results, number_simulation_steps, tracks, topology, case, it
     PLACEMENT algorithm
     """
     # In our model only initial cloud placements are enabled
-    placement = FogPlacement(name="FogPlacement")
+    placement = CloudPlacement(name="CloudPlacement")
     placement.scaleService({"Computation": 1}) # Tau: Not really sure about the number
 
     """
@@ -127,7 +129,7 @@ def main(path, path_results, number_simulation_steps, tracks, topology, case, it
 
     # Expensive task
     # It generates a short video (mp4) with the movement of users in the coverage (without network update)
-    #s.generate_animation(path_results+"animation_%s" % case)
+    # s.generate_animation(path_results+"animation_%s" % case)
 
     """
     Creating the custom monitor that manages the movement of mobile entities
@@ -191,12 +193,12 @@ if __name__ == '__main__':
 
     # Experiment variables
     nSimulations = 1
-    number_simulation_steps = 10
+    number_simulation_steps = 600
     time_in_each_step = 1000  # the interval of how long the network topology is updated
 
     datestamp = time.strftime('%Y%m%d')
     datestamp = "20201012"
-    temporal_folder = experiment_path + "results_" + datestamp + "/"
+    temporal_folder = experiment_path + "results_" + "cloud_no_offloading" + "/" #datestamp + "/"
 
     trajectories_path = experiment_path + "/trajectories/"
 
@@ -228,8 +230,6 @@ if __name__ == '__main__':
     t = Topology()
     dataNetwork = json.load(open(experiment_path + 'networkDefinition.json'))
     t.load_all_node_attr(dataNetwork)
-    print "T.G.NODE"
-    print t.G.nodes
 
     # Performing multiple simulations
     for i in range(nSimulations):

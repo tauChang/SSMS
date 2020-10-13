@@ -1,4 +1,7 @@
 """
+This script is tested and ran only using Python 3.7.9 on MacOS.
+"""
+"""
 This script creates a json file of topology as an input to YAFS.
 In this topology, there are three types of devices: cloud_server, fog_server, and car.
 All entities of the same type have identical configurations (except ID).
