@@ -45,7 +45,16 @@ class DeviceSpeedAwareRouting(Selection):
         # Name of the service
         service = message.dst
 
-        DES_dst = alloc_module[app_name][message.dst] #module sw that can serve the message
+        # Tau: if message has result_receiver_topo_id, then just use it
+        if message.dst == "Actuator" and message.result_receiver_topo_id != None:
+            # find the corresponding sink DES id
+            for des in alloc_DES:
+                if alloc_DES[des] == message.result_receiver_topo_id:
+                    DES_dst = [des]
+                    break    
+        # Tau: else, find possible DESs
+        else:
+            DES_dst = alloc_module[app_name][message.dst] #module sw that can serve the message
 
         #print "Enrouting from SRC: %i  -<->- DES %s"%(node_src,DES_dst)
 

@@ -43,6 +43,9 @@ class Message:
         self.last_idDes = []
         self.id = -1
 
+        # Tau: Custom
+        self.result_receiver_topo_id = None
+
     def __str__(self):
         print  ("{--")
         print (" Name: %s (%s)" %(self.name,self.id))

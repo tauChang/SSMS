@@ -397,7 +397,7 @@ class Sim:
         self.__idMessage +=1
         return self.__idMessage
 
-    def __add_source_population(self, idDES, name_app, message, distribution):
+    def __add_source_population(self, idDES, name_app, message, distribution, id_node): # Tau: added result_receiver_topo_id in message
         """
         A DES-process who controls the invocation of several Pure Source Modules
         """
@@ -411,6 +411,7 @@ class Sim:
                 msg = copy.copy(message)
                 msg.timestamp = self.env.now
                 msg.id = self.__getIDMessage()
+                msg.result_receiver_topo_id = id_node
 
                 self.__send_message(name_app, msg, idDES, self.SOURCE_METRIC)
 
@@ -629,6 +630,9 @@ class Sim:
                                     msg_out.last_idDes = copy.copy(msg.last_idDes)
                                     msg_out.last_idDes.append(ides)
 
+                                    # Tau: add result_receiver_topo_id information
+                                    msg_out.result_receiver_topo_id = msg.result_receiver_topo_id
+
 
                                     self.__send_message(app_name, msg_out,ides, self.FORWARD_METRIC)
 
@@ -652,13 +656,18 @@ class Sim:
 
         self.logger.debug("STOP_Process - Module Consumer: %s\t#DES:%i" % (module, ides))
 
-    def __add_sink_module(self, ides, app_name, module):
+    def __add_sink_module(self, ides, app_name, module, id_node):
         """
         It generates a DES process associated to a SINK module
         """
         self.logger.debug("Added_Process - Module Pure Sink: %s\t#DES:%i" % (module, ides))
         while not self.stop and self.des_process_running[ides]:
             msg = yield self.consumer_pipes["%s%s%i" % (app_name, module, ides)].get()
+            if id_node != msg.result_receiver_topo_id:
+                raise ValueError("SINK RECEIVES NOT CORRECT MESSAGE: %d %d" % (id_node, msg.result_receiver_topo_id))
+            else:
+                print "HOORAY! CORRECT SINK ID: %d" %id_node
+
             """
             Processing the message
             """
@@ -786,7 +795,7 @@ class Sim:
         """
         idDES = self.__get_id_process()
         self.des_process_running[idDES] = True
-        self.env.process(self.__add_source_population(idDES, app_name, msg, distribution))
+        self.env.process(self.__add_source_population(idDES, app_name, msg, distribution, id_node)) # Tau: added id_node to support recording source topo id in message
         self.alloc_DES[idDES] = id_node
         self.alloc_source[idDES] = {"id":id_node,"app":app_name,"module":msg.src,"name":msg.name}
         return idDES
@@ -876,7 +885,7 @@ class Sim:
             if module not in self.alloc_module[app_name]:
                 self.alloc_module[app_name][module] = []
         self.alloc_module[app_name][module].append(idDES)
-        self.env.process(self.__add_sink_module(idDES,app_name, module))
+        self.env.process(self.__add_sink_module(idDES,app_name, module, node))
 
 
 
@@ -1188,10 +1197,10 @@ class Sim:
 
     def __load_map(self):
         trk_bounds = self.user_tracks.get_bounds()
-        min_lat = trk_bounds.min_latitude - 0.1
-        max_lat = trk_bounds.max_latitude + 0.1
+        min_lat = trk_bounds.min_latitude
+        max_lat = trk_bounds.max_latitude
         min_lng = trk_bounds.min_longitude - 0.1
-        max_lng = trk_bounds.max_longitude + 0.1
+        max_lng = trk_bounds.max_longitude + 0.05
 
         self.map = smopy.Map((min_lat, min_lng, max_lat, max_lng), z=12)
 

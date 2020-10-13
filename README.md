@@ -14,3 +14,12 @@ GPX tracks of vehicles are generated using the python script `src/examples/SSMS/
 
 ## Possible Bugs Discovered in YAFS
 * In `coverage.py`, the member function `CircleCoverage.__geodesic_point_buffer(self, lon, lat, km)` should be `CircleCoverage.__geodesic_point_buffer(self, lat, lon, km)`.
+
+## Changes Made to YAFS
+To accomodate our implementation, we made some modification to the main source code of YAFS
+
+### To ensure that the source topology ID that sends the Task is the one who receives the Result
+* In `application.py`, the class `Message` is added a class attribue `result_receiver_topo_id` (in `__init__()`).
+* In `core.py`, the member function `Sim.__add_source_population()` is added an argument `id_node`, which is set as `msg.result_receiver_topo_id`
+* In `core.py`, the member function `Sim.__add_sink_module()` is added an argument `id_node`, to check whether the receiver is as specified in the received message. This is for debug purpose.
+* In `core.py`, when the member function `Sim.__add_consumer_module()` is done "processing the input message", it copies the input message's `result_receiver_topo_id` to the output message, so as to inherit the result receiver.
