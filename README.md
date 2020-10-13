@@ -9,8 +9,10 @@ To generate animation, please uncoment line 132 in `src/examples/SSMS/main.py`.
 
 ## Simulation Environment
 There is 1 cloud server. Along the road, there are 10 fog servers sequentially, with a distance of 600 meters between one another. There are 10 vehicles driving north sequentially at a speed of 60 KM/hr, with a distance of 500 meters between one another. 
+
 Each fog server is connected directly to the cloud server, and each fog server is connected to its adjacent neighbor (i.e., the second fog server is connected to the first and the third fog server). A vehicle will be connected to a fog server when it is in its network coverage, which is a circle coverage with a radius of 500 meters.
 The simulation is conducted for 10 minutes (simulation time). A vehicle generates a task (message) every 100 ms.
+
 A server (cloud and fog) adopts an offloading strategy. When number of tasks in the queue exceeds the offloading threshold, the tasks that arrived late would be offloaded to the closest (in network topology, not distance) fog server available. The offloading threshold is set to be 10.
 
 ## Results
