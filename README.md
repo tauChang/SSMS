@@ -15,16 +15,58 @@ The simulation is conducted for 10 minutes (simulation time). A vehicle generate
 
 A server (cloud and fog) adopts an offloading strategy. When number of tasks in the queue exceeds the offloading threshold, the tasks that arrived late would be offloaded to the closest (in network topology, not distance) fog server available. The offloading threshold is set to be 10.
 
+Detailed configuration are listed below (Note: Memory size of devices is not considered in SSMS).
+
+* Device
+
+Device Type | MIPS | Computation Time of Task (ms)
+----------- | ---: | -----------------------:
+cloud-server| 2000 | 25 (=50 / 2000)
+fog-server  | 800  | 62.5 (=50 / 800)
+
+Note: Computation time of task is calculated as (`Task` Size) divided by (Device Computing Power)
+
+* Link
+
+End Point 1 | End Point 2 | Bandwidth (Mbpms) | Propagation Delay (ms)
+----------- | ----------- | ----------------: | ---------------------:
+cloud-server| fog-server  | 1 | 15
+fog-server  | car         | 10 | 10
+
+Note: This configuration may be somehow unrealistic. The bandwidth of link between `fog-server` and `car` and that between `cloud-server` and `fog-server` should not differ by that much?
+
+* Message
+
+Message Type | Million Instructions | Size (Mbits)
+------------ | -------------------: | -----------:
+Task | 50 | 150
+Result | 10 (Not processed) | 50
+
+
+## Application Model
+![Application Model](https://i.ibb.co/ZGXqC7S/application-model.png)
+There are three modules: `Source`, `Computation`, and `Actuator`. `Source` generates messages of type `Task`, which is then received by `Computation` to perform computing. `Computation` then sends messages of type `Result` to `Actuator`.
+
+`Source` and `Actuator` are placed on the device type `car`. `Computation` are placed on the device type `cloud-server` and `fog-server`.
+
 ## Results
 There are 3 sets of results. 
 * `src/examples/SSMS/exp/results_cloud_no_offloading` contains the result of a simulation environment where only the cloud server performs computation.
 * `src/examples/SSMS/exp/results_fog_no_offloading` contains the result of a simulation environment where the cloud server and the 10 fog servers performs computation, and no offloading strategy is adopted.
 * `src/examples/SSMS/exp/results_fog_offloading` contains the result of a simulation environment where the cloud server and the 10 fog servers performs computation, and offloading strategy is adopted.
+* Summary
+
+Environment |  Average Latency (ms) | Worst-case Latency (ms) | Latency Standard Deviation (ms) | Number of `Task`s Completed 
+------------| ---------------------:| -----------------------:| ------------------------------: | -------------------------:
+Fog Offloading | 281 | 770 | 274 | 37706
+Fog No Offloading | 775 | 4620 | 1030 | 37409
+Cloud No Offloading | 75335 | 260350 | 69196 | 18532
+
 
 ## Tracks
 GPX tracks of vehicles are generated using the python script `src/examples/SSMS/gpxCreator.py`, and the created gpx files are located in the directory `src/examples/SSMS/Tracks`. 
 
-10 vehicles move along **a straight path** sequentially, with the car distance being 0.5 kilometers. The vehicles all move at the speed of 60 kilometer per hour. The gpx tracks record the track points within an 10-minute-period (all gpx tracks have the identical starting time, ending time and time interval).
+10 vehicles move along **a straight path** sequentially, with the car distance being 0.5 kilometers. The vehicles all move at the speed of 60 kilometer per hour. The gpx tracks record the track points within an 10-minute-period and with a time interval of 1 second (all gpx tracks have the identical starting time, ending time and time interval).
 
 ## Possible Bugs Discovered in YAFS
 * In `coverage.py`, the member function `CircleCoverage.__geodesic_point_buffer(self, lon, lat, km)` should be `CircleCoverage.__geodesic_point_buffer(self, lat, lon, km)`.
