@@ -45,6 +45,7 @@ Result | 10 (Not processed) | 50
 
 ## Application Model
 ![Application Model](https://i.ibb.co/ZGXqC7S/application-model.png)
+
 There are three modules: `Source`, `Computation`, and `Actuator`. `Source` generates messages of type `Task`, which is then received by `Computation` to perform computing. `Computation` then sends messages of type `Result` to `Actuator`.
 
 `Source` and `Actuator` are placed on the device type `car`. `Computation` are placed on the device type `cloud-server` and `fog-server`.
