@@ -216,8 +216,8 @@ class Sim:
                     # print "NODES (%i): %s"%(len(self.topology.G.nodes()),self.topology.G.nodes())
                     self.logger.debug("NODES (%i)" % len(self.topology.G.nodes()))
 
-                    if self.control_movement_class is not None:
-                        self.logger.debug("STEP : ",self.control_movement_class.current_step)
+                    # if self.control_movement_class is not None:
+                    #     self.logger.debug("STEP : ",self.control_movement_class.current_step)
 
             else:
 
