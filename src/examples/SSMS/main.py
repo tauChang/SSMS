@@ -172,10 +172,13 @@ def do_video_from_execution_snaps(output_file, png_names, framerate):
 
 
 if __name__ == '__main__':
+    # Load config json file
+    config = json.load(open('config.json'))
+
     # Logging can be avoided by commenting these three lines
     import logging.config
 
-    logging.config.fileConfig('/Users/TommyChang/Desktop/So Simple Mobility Simulation/src/logging.ini')
+    logging.config.fileConfig(config["path"] + '/src/logging.ini')
     #
 
     ##
@@ -184,7 +187,7 @@ if __name__ == '__main__':
     ##
 
     # As we perform the simulations in external server, we simplify the path value according with the WD_path
-    experiment_path = "/Users/TommyChang/Desktop/So Simple Mobility Simulation/src/examples/SSMS/exp/"
+    experiment_path = config["path"] + "/src/examples/SSMS/exp/"
     print "Experiment Path ", experiment_path
     #
 
@@ -193,9 +196,7 @@ if __name__ == '__main__':
     number_simulation_steps = 600
     time_in_each_step = 1000  # the interval of how long the network topology is updated
 
-    datestamp = time.strftime('%Y%m%d')
-    datestamp = "20201012"
-    temporal_folder = experiment_path + "results_" + "fog_offloading" + "/" #datestamp + "/"
+    temporal_folder = config["path"] + "/" + config["exp_name"] + "/" #datestamp + "/"
 
     trajectories_path = experiment_path + "/trajectories/"
 

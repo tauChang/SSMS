@@ -1,2 +1,6 @@
 .DS_Store
 snap_*.png
+*.pyc
+config.json
+*/exp/
+*/__pycache__/
