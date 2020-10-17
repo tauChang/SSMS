@@ -2,5 +2,5 @@
 snap_*.png
 *.pyc
 config.json
-*/exp/
-*/__pycache__/
+**/exp/
+**/__pycache__/
