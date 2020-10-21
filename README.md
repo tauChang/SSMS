@@ -64,6 +64,7 @@ Environment |  Average Latency (ms) | Worst-case Latency (ms) | Latency Standard
 Fog Offloading | 281 | 770 | 274 | 37706
 Fog No Offloading | 775 | 4620 | 1030 | 37409
 Cloud No Offloading | 75335 | 260350 | 69196 | 18532
+Fog Offload to Front | 331 | 772 |  296 | 33216
 
 
 ## Tracks
