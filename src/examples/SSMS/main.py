@@ -196,7 +196,7 @@ if __name__ == '__main__':
     number_simulation_steps = 600
     time_in_each_step = 1000  # the interval of how long the network topology is updated
 
-    temporal_folder = config["path"] + "/" + config["exp_name"] + "/" #datestamp + "/"
+    temporal_folder = experiment_path + "/" + config["exp_name"] + "/" #datestamp + "/"
 
     trajectories_path = experiment_path + "/trajectories/"
 

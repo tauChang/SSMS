@@ -189,6 +189,9 @@ class Sim:
         self.coverage = None
         self.control_movement_class = None
 
+    def send_message(self, app_name, message, idDES, type): # Tau: A wrapper of __send_message, for inheritor to call
+        self.__send_message(self, app_name, message, idDES, type)
+
     # self.__send_message(app_name, message, idDES, self.SOURCE_METRIC)
     def __send_message(self, app_name, message, idDES, type):
         """
@@ -581,15 +584,6 @@ class Sim:
                     self.__offload(ides, app_name, module, OFFLOAD_THRESHOLD)
                 
                 ################
-
-                # for ser in m:
-                #     if "message_in" in ser.keys():
-                #         try:
-                #             print "\t\t M_In: %s  -> M_Out: %s " % (ser["message_in"].name, ser["message_out"].name)
-                #         except:
-                #             print "\t\t M_In: %s  -> M_Out: [NOTHING] " % (ser["message_in"].name)
-
-                # print "Registers len: %i" %len(register_consumer_msg)
                 doBefore = False
                 for register in register_consumer_msg:
                     if msg.name == register["message_in"].name:
@@ -597,18 +591,6 @@ class Sim:
                         """
                         Processing the message
                         """
-                        # if ides == 3:
-                        #     print "Consumer Message: %d " % self.env.now
-                        #     print "MODULE DES: ",ides
-                        #     print "id ",msg.id
-                        #     print "name ",msg.name
-                        #     print msg.path
-                        #     print msg.dst_int
-                        #     print msg.timestamp
-                        #     print msg.dst
-                        #
-                        #     print "-" * 30
-
                         #The module only computes this type of message one time.
                         #It records once
                         if not doBefore:

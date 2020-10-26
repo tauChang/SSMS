@@ -70,6 +70,17 @@ class DeviceSpeedAwareRouting(Selection):
             self.cache[node_src,tuple(DES_dst)] = self.compute_BEST_DES(node_src, alloc_DES, sim, DES_dst,message)
 
         path, des = self.cache[node_src,tuple(DES_dst)]
+
+         # Tau: When source to computation, find the second-nearest fog server in front
+        if message.dst == "Computation":
+            for d in alloc_DES:
+                if alloc_DES[d] == alloc_DES[des] + 1:
+                    DES_dst = [d]   
+                    break
+
+            self.cache[node_src,tuple(DES_dst)] = self.compute_BEST_DES(node_src, alloc_DES, sim, DES_dst,message)
+            path, des = self.cache[node_src,tuple(DES_dst)]
+
         self.controlServices[(node_src, service)] = (path, des)
 
         return [path], [des]
