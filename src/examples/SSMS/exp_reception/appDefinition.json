@@ -1,0 +1,62 @@
+[
+  {
+    "name": "SSMS",
+    "module": [
+      {
+        "name": "Source",
+        "RAM": 1,
+        "Type": "SOURCE"
+      },
+      {
+        "name": "Computation",
+        "RAM": 10,
+        "Type": "MODULE"
+      },
+      {
+        "name": "Reception",
+        "RAM": 10,
+        "Type": "MODULE"
+      },
+      {
+        "name": "Actuator",
+        "RAM": 1,
+        "Type": "SINK"
+      }
+    ],
+    "message": [
+      {
+        "name": "Task_Request",
+        "src": "Source",
+        "dst": "Reception",
+        "instructions": 0,
+        "bytes": 150000
+      },
+      {
+        "name": "Task",
+        "src": "Reception",
+        "dst": "Computation",
+        "instructions": 50000000,
+        "bytes": 150000
+      },
+      {
+        "name": "Result",
+        "src": "Computation",
+        "dst": "Actuator",
+        "instructions": 10000000,
+        "bytes": 50000
+      }
+    ],
+    "service": [
+      {
+        "module": "Reception",
+        "message_in": "Task_Request",
+        "message_out": "Task"
+      },
+      {
+        "module": "Computation",
+        "message_in": "Task",
+        "message_out": "Result"
+      }
+    ]
+  }
+]

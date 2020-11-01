@@ -58,7 +58,7 @@ class Sim:
     SINK_METRIC = "SINK_M"
     LINK_METRIC = "LINK"
     ### OFFLOAD ###
-    OFFLOAD_METRIC = "OFFLOAD_M"
+    #OFFLOAD_METRIC = "OFFLOAD_M"
     ###############
 
     def __init__(self, topology, name_register='events_log.json', link_register='links_log.json', redis=None, purge_register=True, logger=None, default_results_path=None):
@@ -189,8 +189,10 @@ class Sim:
         self.coverage = None
         self.control_movement_class = None
 
-    def send_message(self, app_name, message, idDES, type): # Tau: A wrapper of __send_message, for inheritor to call
-        self.__send_message(self, app_name, message, idDES, type)
+        """
+        Added by Tau
+        """
+        self.consumer_module_behavior = {}
 
     # self.__send_message(app_name, message, idDES, self.SOURCE_METRIC)
     def __send_message(self, app_name, message, idDES, type):
@@ -423,24 +425,23 @@ class Sim:
 
         self.logger.debug("STOP_Process - Module Pure Source\t#DES:%i" % idDES)
 
-    def __update_node_metrics(self, app, module, message, des, type, sourceDES=-1):
+    def __update_node_metrics(self, app, module, message, des, type, sourceDES=-1, has_service_time=True): # Tau: Added has_service_time, since offloading may take no service_time
         try:
             """
             It computes the service time in processing a message and record this event
             """
             # if False:  # Tau: actuator still processes (could be discussed)
-            if module in self.apps[app].get_sink_modules():
+            id_node  = self.alloc_DES[des]
+
+            if module in self.apps[app].get_sink_modules() or not has_service_time:
                 """
                 The module is a SINK (Actuactor)
                 """
-                id_node  = self.alloc_DES[des]
                 time_service = 0
             else:
                 """
                 The module is a processing module
                 """
-                id_node = self.alloc_DES[des]
-
                 # att_node = self.topology.get_nodes_att()[id_node] # WARNING DEPRECATED from V1.0
                 att_node = self.topology.G.nodes[id_node]
 
@@ -454,19 +455,20 @@ class Sim:
             it records the entity.id who sends this message
             """
             # sourceDES = -1  Tau: put to parameter
-            try:
-                DES_possible = self.alloc_module[app][message.src]
-                for eDES in DES_possible:
-                    if self.alloc_DES[eDES] == message.path[0]:
-                        sourceDES = eDES
-            except:
-                for k in self.alloc_source.keys():
-                    if self.alloc_source[k]['id'] == message.path[0]:
-                        sourceDES = k
+            if sourceDES == -1:
+                try:
+                    DES_possible = self.alloc_module[app][message.src]
+                    for eDES in DES_possible:
+                        if self.alloc_DES[eDES] == message.path[0]:
+                            sourceDES = eDES
+                except:
+                    for k in self.alloc_source.keys():
+                        if self.alloc_source[k]['id'] == message.path[0]:
+                            sourceDES = k
 
             # Tau: for offloading
-            if type == self.OFFLOAD_METRIC:
-                time_service = 0
+            #if type == self.OFFLOAD_METRIC:
+            #    time_service = 0
             # print "Source DES ",sourceDES
             # print "-" * 50
 
@@ -529,61 +531,29 @@ class Sim:
 
         self.logger.debug("STOP_Process - Module Source: %s\t#DES:%i" % (module, idDES))
 
-    def __offload(self, ides, app_name, module, offload_threshold):
-        """
-        offload_threshold: the maximum amount of requests in queue
-        """
-        thisNode = self.alloc_DES[ides]
-        i = offload_threshold
-        queueSize = len(self.consumer_pipes["%s%s%i"%(app_name,module,ides)].items)
-        print "QUEUE: "
-        for m in self.consumer_pipes["%s%s%i"%(app_name,module,ides)].items:
-            print m.id
-        print "QUEUESIZE: "
-        print queueSize
-        while i < queueSize:
-            msg = self.consumer_pipes["%s%s%i"%(app_name,module,ides)].items[i]
-            self.logger.debug(
-                "(App:%s#DES:%i#%s)\tModule - Recording the message:\t%s ID: %i" % (app_name, ides, module, msg.name, msg.id))
-            self.__update_node_metrics(app_name, module, msg, ides, self.OFFLOAD_METRIC) # service time = 0
-
-            # Deal with offloading
-            self.logger.debug(
-            "(App:%s#DES:%i#%s)\tModule - Full buffer of node %i:\t%s" % (app_name, ides, module, thisNode, msg.name))
-        
-            print "OFFLOADED MSG: "
-            print msg
-            # Tau: don't know why shallow copy doesnt affect register["message_in"]
-            msg_out = copy.copy(msg)
-            msg_out.id = msg.id
-            msg_out.timestamp = self.env.now
-            msg_out.last_idDes = copy.copy(msg.last_idDes)
-            msg_out.last_idDes.append(ides)
-            self.__send_message(app_name, msg_out, ides, self.FORWARD_METRIC)
-            i += 1
-
-        # Trim queue
-        self.consumer_pipes["%s%s%i"%(app_name,module,ides)].items = \
-            self.consumer_pipes["%s%s%i"%(app_name,module,ides)].items[:offload_threshold]
-
     def __add_consumer_module(self, ides, app_name, module, register_consumer_msg):
         """
+        Tau: This method is not used anymore.
+
         It generates a DES process associated to a compute module
         """
         self.logger.debug("Added_Process - Module Consumer: %s\t#DES:%i" % (module, ides))
         while not self.stop and self.des_process_running[ides]:
             if self.des_process_running[ides]:
                 msg = yield self.consumer_pipes["%s%s%i"%(app_name,module,ides)].get()
-                # One pipe for each module name
-                
-                ### OFFLOAD ###
-                OFFLOAD_THRESHOLD = 10  # Note: so at the same time, this node holds at most OFFLOAD_THRESHOLD + 1 (the one being processed right now) requests
+                self.consumer_module_behavior[app_name][module].accept(self, ides, register_consumer_msg, msg)
 
-                #if queueSize >= OFFLOAD_THRESHOLD: # Note: the time it takes to make decision is ignored
-                if module == "Computation":
-                    self.__offload(ides, app_name, module, OFFLOAD_THRESHOLD)
                 
                 ################
+
+                # for ser in m:
+                #     if "message_in" in ser.keys():
+                #         try:
+                #             print "\t\t M_In: %s  -> M_Out: %s " % (ser["message_in"].name, ser["message_out"].name)
+                #         except:
+                #             print "\t\t M_In: %s  -> M_Out: [NOTHING] " % (ser["message_in"].name)
+
+                # print "Registers len: %i" %len(register_consumer_msg)
                 doBefore = False
                 for register in register_consumer_msg:
                     if msg.name == register["message_in"].name:
@@ -591,6 +561,18 @@ class Sim:
                         """
                         Processing the message
                         """
+                        # if ides == 3:
+                        #     print "Consumer Message: %d " % self.env.now
+                        #     print "MODULE DES: ",ides
+                        #     print "id ",msg.id
+                        #     print "name ",msg.name
+                        #     print msg.path
+                        #     print msg.dst_int
+                        #     print msg.timestamp
+                        #     print msg.dst
+                        #
+                        #     print "-" * 30
+
                         #The module only computes this type of message one time.
                         #It records once
                         if not doBefore:
@@ -849,7 +831,8 @@ class Sim:
         """
         idDES = self.__get_id_process()
         self.des_process_running[idDES] = True
-        self.env.process(self.__add_consumer_module(idDES,app_name, module,register_consumer_msg))
+        self.env.process(self.consumer_module_behavior[app_name][module](idDES, app_name, module, register_consumer_msg))
+            #self.__add_consumer_module(idDES,app_name, module,register_consumer_msg))
         # To generate the QUEUE of a SERVICE module
         self.__add_consumer_service_pipe(app_name, module, idDES)
 
@@ -927,6 +910,7 @@ class Sim:
 
         # Initialization
         self.alloc_module[app.name] = {}
+        self.consumer_module_behavior[app.name] = {} # Tau: added
 
         # Add Placement controls to the App
         if not placement.name in self.placement_policy.keys():  # First Time
@@ -1234,6 +1218,12 @@ class Sim:
 
     def run(self, until,test_initial_deploy=False,show_progress_monitor=True,mobile_behaviour=False):
         """
+        Tau: adding behavior
+        """
+        self.consumer_module_behavior["SSMS"]["Computation"] = self.basic_behavior
+        self.consumer_module_behavior["SSMS"]["Reception"] = self.SSMS_Reception_behavior
+
+        """
         Start the simulation
 
         Args:
@@ -1283,3 +1273,208 @@ class Sim:
             self.env.run(until=until) #This does not stop the simpy.simulation at time. We have to force the stop
 
         self.metrics.close()
+
+    def get_pipes_of_node(self, app_name, module, topo_id):
+        pipes = []
+        for des in self.alloc_module["SSMS"]["Computation"]:
+            if self.alloc_DES[des] == topo_id:
+                pipes.append(self.consumer_pipes["%s%s%i"%(app_name,module,des)])
+        
+        return pipes
+    
+    def basic_behavior(self, ides, app_name, module, register_consumer_msg):
+        self.logger.debug("Added_Process - Module Consumer: %s\t#DES:%i" % (module, ides))
+        while not self.stop and self.des_process_running[ides]:
+            if self.des_process_running[ides]:
+                msg = yield self.consumer_pipes["%s%s%i"%(app_name,module,ides)].get()
+
+                doBefore = False
+                for register in register_consumer_msg:
+                    if msg.name == register["message_in"].name:
+                        # The message can be treated by this module
+                        """
+                        Processing the message
+                        """
+                        #The module only computes this type of message one time.
+                        #It records once
+                        if not doBefore:
+                            self.logger.debug(
+                                "(App:%s#DES:%i#%s)\tModule - Recording the message:\t%s ID: %i" % (app_name, ides, module, msg.name, msg.id))
+                            type = self.NODE_METRIC
+                            sourceDES = -1
+                            if msg.last_idDes:
+                                sourceDES = msg.last_idDes[-1]
+                            service_time = self.__update_node_metrics(app_name, module, msg, ides, type, sourceDES=sourceDES)
+
+                            yield self.env.timeout(service_time)
+                            doBefore = True
+
+                        """
+                        Transferring the message
+                        """
+                        if not register["message_out"]:
+                            """
+                            Sink behaviour (nothing to send)
+                            """
+                            self.logger.debug(
+                                "(App:%s#DES:%i#%s)\tModule - Sink Message:\t%s" % (app_name, ides, module, msg.name))
+                            continue
+                        else:
+                            if register["dist"](**register["param"]): ### THRESHOLD DISTRIBUTION to Accept the message from source
+                                if not register["module_dest"]:
+                                    # it is not a broadcasting message
+                                    self.logger.debug("(App:%s#DES:%i#%s)\tModule - Transmit Message:\t%s" % (
+                                        app_name, ides, module, register["message_out"].name))
+
+                                    msg_out = copy.copy(register["message_out"])
+                                    msg_out.timestamp = self.env.now
+                                    msg_out.id = msg.id
+                                    msg_out.last_idDes = copy.copy(msg.last_idDes)
+                                    msg_out.last_idDes.append(ides)
+
+                                    # Tau: add result_receiver_topo_id information
+                                    msg_out.result_receiver_topo_id = msg.result_receiver_topo_id
+
+
+                                    self.__send_message(app_name, msg_out,ides, self.FORWARD_METRIC)
+
+                                else:
+                                    # it is a broadcasting message
+                                    self.logger.debug("(App:%s#DES:%i#%s)\tModule - Broadcasting Message:\t%s" % (
+                                        app_name, ides, module, register["message_out"].name))
+
+                                    msg_out = copy.copy(register["message_out"])
+                                    msg_out.timestamp = self.env.now
+                                    msg_out.last_idDes = copy.copy(msg.last_idDes)
+                                    msg_out.id = msg.id
+                                    msg_out.last_idDes = msg.last_idDes.append(ides)
+                                    for idx, module_dst in enumerate(register["module_dest"]):
+                                        if random.random() <= register["p"][idx]:
+                                            self.__send_message(app_name, msg_out, ides,self.FORWARD_METRIC)
+
+                            else:
+                                self.logger.debug("(App:%s#DES:%i#%s)\tModule - Stopped Message:\t%s" % (
+                                    app_name, ides, module, register["message_out"].name))
+
+        self.logger.debug("STOP_Process - Module Consumer: %s\t#DES:%i" % (module, ides))
+
+    def SSMS_Reception_behavior(self, ides, app_name, module, register_consumer_msg):
+        self.logger.debug("Added_Process - Module Consumer: %s\t#DES:%i" % (module, ides))
+        while not self.stop and self.des_process_running[ides]:
+            if self.des_process_running[ides]:
+                msg = yield self.consumer_pipes["%s%s%i"%(app_name,module,ides)].get()
+
+                doBefore = False
+                for register in register_consumer_msg:
+                    if msg.name == register["message_in"].name:
+                        # The message can be treated by this module
+
+                        # Tau: Decide who to send the task to. 
+                        topo_id = self.alloc_DES[ides]
+                        my_pipes = self.get_pipes_of_node(app_name, "Computation", topo_id)
+                        prev_pipes = self.get_pipes_of_node(app_name, "Computation", topo_id-1)
+                        next_pipes = self.get_pipes_of_node(app_name, "Computation", topo_id+1)
+
+                        msg_receiver_topo_id = None
+                        OFFLOAD_THRESHOLD = 10
+
+                        print("Pipe length: %i %i %i"%(len(prev_pipes), len(my_pipes), len(next_pipes)))
+
+                        if len(my_pipes[0].items) <= OFFLOAD_THRESHOLD:
+                            msg_receiver_topo_id = topo_id # give it to my computation
+                        elif len(prev_pipes) > 0 or len(next_pipes) > 0:
+                            if(len(prev_pipes) == 0 or len(next_pipes[0].items) < len(prev_pipes[0].items)):
+                                msg_receiver_topo_id = topo_id + 1
+                            else:
+                                msg_receiver_topo_id = topo_id - 1
+
+                        """
+                        Processing the message
+                        """
+                        #The module only computes this type of message one time.
+                        #It records once
+                        if not doBefore:
+                            self.logger.debug(
+                                "(App:%s#DES:%i#%s)\tModule - Recording the message:\t%s ID: %i" % (app_name, ides, module, msg.name, msg.id))
+                            if msg_receiver_topo_id == topo_id:
+                                type = self.NODE_METRIC
+                            else:
+                                type = "OFFLOAD_M"
+                            sourceDES = -1
+                            if msg.last_idDes:
+                                sourceDES = msg.last_idDes[-1]
+                            service_time = self.__update_node_metrics(app_name, module, msg, ides, type, sourceDES=sourceDES, has_service_time=False)
+
+                            yield self.env.timeout(service_time)
+                            doBefore = True
+
+                        """
+                        Transferring the message
+                        """
+
+
+                        if not register["message_out"]:
+                            """
+                            Sink behaviour (nothing to send)
+                            """
+                            self.logger.debug(
+                                "(App:%s#DES:%i#%s)\tModule - Sink Message:\t%s" % (app_name, ides, module, msg.name))
+                            continue
+                        else:
+                            if register["dist"](**register["param"]): ### THRESHOLD DISTRIBUTION to Accept the message from source
+                                if not register["module_dest"]:
+                                    # it is not a broadcasting message
+                                    if msg_receiver_topo_id == topo_id:
+                                        # Tau: to myself
+                                        self.logger.debug("(App:%s#DES:%i#%s)\tModule - Transmit Message:\t%s" % (
+                                            app_name, ides, module, register["message_out"].name))
+
+                                        msg_out = copy.copy(register["message_out"])
+                                        msg_out.timestamp = self.env.now
+                                        msg_out.id = msg.id
+                                        msg_out.last_idDes = copy.copy(msg.last_idDes)
+                                        msg_out.last_idDes.append(ides)
+
+                                        # Tau: add result_receiver_topo_id information
+                                        msg_out.result_receiver_topo_id = msg.result_receiver_topo_id
+
+
+                                        self.__send_message(app_name, msg_out,ides, self.FORWARD_METRIC)
+                                    
+                                    else:
+                                        # Tau: offload
+                                        self.logger.debug("(App:%s#DES:%i#%s)\tModule - Offload Message from node %i to node %i\t" % (
+                                            app_name, ides, module, topo_id, msg_receiver_topo_id))
+
+                                        msg_out = copy.copy(msg)
+                                        msg_out.id = msg.id
+                                        msg_out.timestamp = self.env.now
+                                        msg_out.last_idDes = copy.copy(msg.last_idDes)
+                                        msg_out.last_idDes.append(ides)
+                                        # To this node
+                                        msg_out.msg_receiver_topo_id = msg_receiver_topo_id
+
+                                        self.__send_message(app_name, msg_out, ides, "OFFLOAD_M")
+                                """
+                                else:
+                                    # it is a broadcasting message
+                                    self.logger.debug("(App:%s#DES:%i#%s)\tModule - Broadcasting Message:\t%s" % (
+                                        app_name, ides, module, register["message_out"].name))
+
+                                    msg_out = copy.copy(register["message_out"])
+                                    msg_out.timestamp = self.env.now
+                                    msg_out.last_idDes = copy.copy(msg.last_idDes)
+                                    msg_out.id = msg.id
+                                    msg_out.last_idDes = msg.last_idDes.append(ides)
+                                    for idx, module_dst in enumerate(register["module_dest"]):
+                                        if random.random() <= register["p"][idx]:
+                                            self.__send_message(app_name, msg_out, ides,self.FORWARD_METRIC)
+                                """
+
+                            else:
+                                self.logger.debug("(App:%s#DES:%i#%s)\tModule - Stopped Message:\t%s" % (
+                                    app_name, ides, module, register["message_out"].name))
+
+        self.logger.debug("STOP_Process - Module Consumer: %s\t#DES:%i" % (module, ides))
+
+

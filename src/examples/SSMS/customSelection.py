@@ -13,9 +13,22 @@ class DeviceSpeedAwareRouting(Selection):
         # value : a list of idDevices
         super(DeviceSpeedAwareRouting, self).__init__()
 
-    def compute_BEST_DES(self, node_src, alloc_DES, sim, DES_dst,message):
+    def compute_BEST_PATH(self, node_src, node_dst, sim, DES_dst):
         try:
+            print "In selector: FROM %i to %i"%(node_src, node_dst)
+            bestLong = float('inf')
+            minPath = list(nx.shortest_path(sim.topology.G, source=node_src, target=node_dst))
+            bestDES = DES_dst[0]
 
+            return minPath, bestDES
+
+        except (nx.NetworkXNoPath, nx.NodeNotFound) as e:
+            self.logger.warning("There is no path between two nodes: %s - %s " % (node_src, node_dst))
+            # print "Simulation ends?"
+            return [], None
+
+    def compute_BEST_DES(self, node_src, alloc_DES, sim, DES_dst):
+        try:
             bestLong = float('inf')
             minPath = []
             bestDES = []
@@ -23,9 +36,9 @@ class DeviceSpeedAwareRouting(Selection):
             for dev in DES_dst:
                 #print "DES :",dev
                 node_dst = alloc_DES[dev]
-                if(node_dst == node_src):
+                #if(node_dst == node_src and message.type == "offload"):
                 # This message is offloaded
-                    continue
+                #    continue
                 path = list(nx.shortest_path(sim.topology.G, source=node_src, target=node_dst))
                 long = len(path)
 
@@ -48,38 +61,50 @@ class DeviceSpeedAwareRouting(Selection):
         # Name of the service
         service = message.dst
 
-        # Tau: if message has result_receiver_topo_id, then just use it
-        if message.dst == "Actuator" and message.result_receiver_topo_id != None:
-            # find the corresponding sink DES id
-            for des in alloc_DES:
-                if alloc_DES[des] == message.result_receiver_topo_id:
-                    DES_dst = [des]
-                    break    
-        # Tau: else, find possible DESs
-        else:
-            DES_dst = alloc_module[app_name][message.dst] #module sw that can serve the message
-
-        #print "Enrouting from SRC: %i  -<->- DES %s"%(node_src,DES_dst)
-
         #The number of nodes control the updating of the cache. If the number of nodes changes, the cache is totally cleaned.
         if self.invalid_cache_value:
             self.invalid_cache_value = False
             self.cache = {}
 
-        if (node_src,tuple(DES_dst)) not in self.cache.keys():
-            self.cache[node_src,tuple(DES_dst)] = self.compute_BEST_DES(node_src, alloc_DES, sim, DES_dst,message)
+
+        # Tau: if message has result_receiver_topo_id, then just use it
+        if message.msg_receiver_topo_id != None:
+            print "SOMETHING"
+        else:
+            print "MAN NONE"
+
+        if message.dst == "Actuator" and message.result_receiver_topo_id != None:
+            print "TO ACTUATOR!!!!"
+            node_dst = message.result_receiver_topo_id
+
+            # find the corresponding sink DES id
+            for des in sim.alloc_module[app_name][message.dst]:
+                if alloc_DES[des] == message.result_receiver_topo_id:
+                    DES_dst = [des]
+                    break    
+            
+            if (node_src,tuple(DES_dst)) not in self.cache.keys():
+                self.cache[node_src,tuple(DES_dst)] = self.compute_BEST_PATH(node_src, node_dst, sim, DES_dst)
+
+        elif message.msg_receiver_topo_id != None:
+            node_dst = message.msg_receiver_topo_id
+
+            # find the corresponding sink DES id
+            for des in sim.alloc_module[app_name][message.dst]:
+                if alloc_DES[des] == message.msg_receiver_topo_id:
+                    DES_dst = [des]
+                    break    
+            
+            if (node_src,tuple(DES_dst)) not in self.cache.keys():
+                self.cache[node_src,tuple(DES_dst)] = self.compute_BEST_PATH(node_src, node_dst, sim, DES_dst)
+        # Tau: else, find possible DESs
+        else:
+            DES_dst = alloc_module[app_name][message.dst] #module sw that can serve the message
+            if (node_src,tuple(DES_dst)) not in self.cache.keys():
+                self.cache[node_src,tuple(DES_dst)] = self.compute_BEST_DES(node_src, alloc_DES, sim, DES_dst)
+        
 
         path, des = self.cache[node_src,tuple(DES_dst)]
-
-         # Tau: When source to computation, find the second-nearest fog server in front
-        if message.dst == "Computation":
-            for d in alloc_DES:
-                if alloc_DES[d] == alloc_DES[des] + 1:
-                    DES_dst = [d]   
-                    break
-
-            self.cache[node_src,tuple(DES_dst)] = self.compute_BEST_DES(node_src, alloc_DES, sim, DES_dst,message)
-            path, des = self.cache[node_src,tuple(DES_dst)]
 
         self.controlServices[(node_src, service)] = (path, des)
 
