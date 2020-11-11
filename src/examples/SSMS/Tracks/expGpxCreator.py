@@ -14,7 +14,7 @@ import json
 track_name = 'ladder'
 track_path = './tracks/' + track_name + '.gpx'
 target_path = "./" + track_name + '_sets/'
-simulation_total_time = 10000
+simulation_total_time = 1000
 interval_padding = 10
 distribution = random.expovariate
 mean = 0.05
