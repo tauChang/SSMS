@@ -84,8 +84,9 @@ There are two new scripts:
   - This script extends one .gpx file into a set of .gpx files, in order to generate multiple vehicles in experiments.
   - The setting of parameters is directly in the script. **(TODO: Probably should have a higher level config.)**
   - The script will create a directory with suffix `_sets`, and save the generated files in it.
+  - The script will also record the config info in `gpx_config.json` in the same directory.
 
-Example:
+**Example**:
 If we generated a gpx file with `generalGpxCreator.py` called `ladder.gpx`, and then extend it by `expGpxCreator.py`, the file structure in `Tracks` will be like:
 
 ```js
@@ -103,6 +104,7 @@ Tracks
 └─ generalGpxCreator.py                 
 ```
 
+⚠️ Note that the path parameters in the scripts are all hardcoded. Scripts will only run correctly in the directory.  
 ## Possible Bugs Discovered in YAFS
 * In `coverage.py`, the member function `CircleCoverage.__geodesic_point_buffer(self, lon, lat, km)` should be `CircleCoverage.__geodesic_point_buffer(self, lat, lon, km)`.
 
