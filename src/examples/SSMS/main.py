@@ -91,7 +91,7 @@ def main(path, path_results, number_simulation_steps, tracks, topology, case, it
     """
     # In our model only initial cloud placements are enabled
     placement = FogPlacement(name="FogPlacement")
-    placement.scaleService({"Computation": 1}) # Tau: Not really sure about the number
+    placement.scaleService({"Reception":1, "Computation": 1}) # Tau: Not really sure about the number
 
     """
     SELECTOR and Deploying algorithm
@@ -104,7 +104,7 @@ def main(path, path_results, number_simulation_steps, tracks, topology, case, it
     pop = Statical(name="Statical Population")
 
     dDistribution = deterministicDistribution(name="Deterministic",time=100)  # generate task every 100 ms
-    pop.set_src_control({"model": "car", "number":1,"message": app.get_message("Task"), "distribution": dDistribution})
+    pop.set_src_control({"model": "car", "number":1,"message": app.get_message("Task_Request"), "distribution": dDistribution})
     pop.set_sink_control({"model": "car","number":1,"module":app.get_sink_modules()})
 
     """
@@ -187,16 +187,16 @@ if __name__ == '__main__':
     ##
 
     # As we perform the simulations in external server, we simplify the path value according with the WD_path
-    experiment_path = config["path"] + "/src/examples/SSMS/exp/"
+    experiment_path = config["path"] + "/src/examples/SSMS/exp_reception/"
     print "Experiment Path ", experiment_path
     #
 
     # Experiment variables
     nSimulations = 1
-    number_simulation_steps = 600
+    number_simulation_steps = 10
     time_in_each_step = 1000  # the interval of how long the network topology is updated
 
-    temporal_folder = config["path"] + "/" + config["exp_name"] + "/" #datestamp + "/"
+    temporal_folder = experiment_path + "/" + config["exp_name"] + "/" #datestamp + "/"
 
     trajectories_path = experiment_path + "/trajectories/"
 

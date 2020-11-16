@@ -45,6 +45,8 @@ class Message:
 
         # Tau: Custom
         self.result_receiver_topo_id = None
+        self.msg_receiver_topo_id = None
+        #self.type = None
 
     def __str__(self):
         print  ("{--")
