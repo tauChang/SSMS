@@ -1,0 +1,12 @@
+{
+    "exp_dir_path" : "./",
+    "trajectory_dir_path" : "./straightline_10cars/trajectories",
+    "result_dir_path" : "./straightline_10cars/result",
+    "logging_file_path" : "../../src/logging.ini",
+    "num_simulation" : 1,
+    "num_simulation_step" : 10,
+    "time_in_each_step" : 1000,
+    "server_coverage_radius" : 10,
+    "generate_animation" : 1,
+    "map_boundary" : {"min_lat":-0.1, "max_lat": 0.1, "min_lng": -0.1, "max_lng": 0.1}
+}

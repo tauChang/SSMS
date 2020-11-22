@@ -1,0 +1,9 @@
+**/.DS_Store
+Results*.csv
+*.mp4
+normalized_trajectories.csv
+animation*.png
+*.gpx
+snap_*.png
+*.pyc
+**/__pycache__/
