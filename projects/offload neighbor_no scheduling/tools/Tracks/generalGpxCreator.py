@@ -91,13 +91,13 @@ def point2coord(point):
     # Started from (lat, lng) = (0, 0), go x km along west/east and go y km along north/south.
     x = point[0]
     y = point[1]
-    horizontal_bearing = calculate_bearing((x, 0), (0, 0))
+    horizontal_bearing = calculate_bearing((0, 0), (x, 0))
     horizontal_dist = geopy.distance.distance(kilometers=x) 
-    vertical_bearing = calculate_bearing((0, y), (0, 0))
+    vertical_bearing = calculate_bearing((0, 0), (0, y))
     vertical_dist = geopy.distance.distance(kilometers=y)
     tmp_coord = horizontal_dist.destination(point=geopy.Point(0, 0), bearing=horizontal_bearing)
     coord = vertical_dist.destination(point=geopy.Point(tmp_coord[0], tmp_coord[1]), bearing=vertical_bearing)
-    return {"lat": coord[0], "lng": coord[1]}
+    return {"lng": coord[0], "lat": coord[1]}
 
 
 '''
@@ -112,16 +112,12 @@ def point2coord(point):
 
 # User input -----------------------------------------------------
 start_time = datetime(2020, 10, 10, 10, 0, 0)
-start_coord = point2coord((0,-10)) # (y, x): From the oirgin, move x km horizontally, and move y km vertically.
-instructions = [(90, 1), (0, 1), (90, 1), (180, 1), (90, 1), (180, 1), (90, 1), (0, 1), 
-                (90, 1), (0, 1), (90, 1), (180, 1), (90, 1), (180, 1), (90, 1), (0, 1),
-                (90, 1), (0, 1), (90, 1), (180, 1), (90, 1), (180, 1), (90, 1), (0, 1),
-                (90, 1), (0, 1), (90, 1), (180, 1), (90, 1), (180, 1), (90, 1), (0, 1),
-                (90, 1), (0, 1), (90, 1), (180, 1), (90, 1), (180, 1), (90, 1), (0, 1)] # [(bearing, distance)]
+start_coord = point2coord((3.5, 5)) # (x, y): From the oirgin, move x km horizontally, and move y km vertically.
+instructions = [(180, 1.5), (270, 1.5), (180, 1), (270, 2)] # [(bearing, distance)]
 moving_speed = 50 # km/h
 gpx_tag_attribute = {}
-track_name = 'uglyzigzag'
-directory_path = "./tracks/"
+track_name = 'track6'
+directory_path = "./tracks/general_20201205/"
 # User input end -------------------------------------------------
 
 t = Track(

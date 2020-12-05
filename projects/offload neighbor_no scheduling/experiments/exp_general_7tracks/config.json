@@ -1,0 +1,12 @@
+{
+    "exp_dir_path" : "./",
+    "trajectory_dir_path" : "./only_track0/trajectories",
+    "result_dir_path" : "./only_track0/result",
+    "logging_file_path" : "../../src/logging.ini",
+    "num_simulation" : 0,
+    "num_simulation_step" : 1200,
+    "time_in_each_step" : 1000,
+    "server_coverage_radius" : 10,
+    "generate_animation" : 1,
+    "map_boundary" : {"min_lat":0.0, "max_lat": 0.047, "min_lng": 0.0, "max_lng": 0.047}
+}

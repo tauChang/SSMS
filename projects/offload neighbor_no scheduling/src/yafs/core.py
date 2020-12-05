@@ -1203,7 +1203,7 @@ class Sim:
         else:
             max_lng = trk_bounds.max_longitude
 
-        self.map = smopy.Map((min_lat, min_lng, max_lat, max_lng), z=12)
+        self.map = smopy.Map((min_lat, min_lng, max_lat, max_lng), margin = None)
 
 
     def __update_connection_points(self):

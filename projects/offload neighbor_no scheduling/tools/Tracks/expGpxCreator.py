@@ -11,14 +11,15 @@ import os
 import json
 
 # User input -----------------------------------------------------
-track_name = 'uglyzigzag'
-track_path = './tracks/' + track_name + '.gpx'
-target_path = "./" + track_name + '_sets/'
-simulation_total_time = 1000 * 5
+track_name = 'track6'
+track_path = './tracks/general_20201205/' + track_name + '.gpx'
+target_path = "./general_20201205_sets/" + track_name + '/'
+simulation_total_time = 1200 # seconds
 interval_padding = 10
 distribution = random.expovariate
-mean = 0.05
+mean = 0.1
 start_time = datetime(2020, 10, 10, 10, 0, 0)
+first_car_id = 10932 # ids: 10000, 10001, 10002, ...
 # User input end -------------------------------------------------
 
 # Some constants ----------------
@@ -54,7 +55,9 @@ vehicle_occur_time = []
 current_time = 0
 while current_time < simulation_total_time:
     vehicle_occur_time.append(current_time)
-    current_time += round(distribution(mean))
+    current_time += round(distribution(mean))   # in seconds, lower bound 0.5 second
+
+print(vehicle_occur_time)
 
 '''
     Note:
@@ -98,11 +101,15 @@ for occur_times in vehicle_occur_time_each_gpx:
     origin_datetime = start_time
     cur_time = 0
     cur_index = 0 # This records the index of occur_times
+    # print(occur_times)
+    # print(len(occur_times))
     while cur_time < simulation_total_time:
+        #print(cur_time)
         cur_datetime = origin_datetime + timedelta(seconds=cur_time)
         lat = FORSAKEN_LAT
         lon = FORSAKEN_LON
         # If cur_index >= len(occur_times), it means the rest of the track point should be (0,0)
+        
         if cur_index < len(occur_times):
             time_shift = cur_time - occur_times[cur_index]
             # If the time shift is in range of track length, set lat and lon.
@@ -137,18 +144,18 @@ if not os.path.exists(os.path.dirname(target_path)):
         if exc.errno != errno.EEXIST:
             raise
 for i, gpx in enumerate(gpxs):
-    file_name = target_path + track_name + '_' + str(i) + '.gpx'
+    file_name = target_path + str(first_car_id + i) + '.gpx'
     with open(file_name, 'w') as f:
         f.write(etree.tostring(gpx, pretty_print=True, encoding="unicode"))
 
 
 # Store the information of this gpx set in json form, and save it to the same path as .gpx files.
-config = {}
-config['track_name'] = track_name
-config['simulation_total_time'] = 10000
-config['interval_padding'] = 10
-config['distribution'] = 'random.expovariate, mean=0.05'
-with open(target_path + 'gpx_config.json', 'w') as f:
-    f.write(json.dumps(config))
+# config = {}
+# config['track_name'] = track_name
+# config['simulation_total_time'] = 10000
+# config['interval_padding'] = 10
+# config['distribution'] = 'random.expovariate, mean=0.05'
+# with open(target_path + 'gpx_config.json', 'w') as f:
+#     f.write(json.dumps(config))
 
 

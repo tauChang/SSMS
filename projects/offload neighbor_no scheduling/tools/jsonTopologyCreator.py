@@ -74,11 +74,11 @@ def create_fog_server_link_list(server_count, server_first_id, BW, PR):
     return result
 
 # User input -----------------------------------------------------
-file_path = "/Users/TommyChang/Desktop/So Simple Mobility Simulation/src/examples/SSMS/exp/networkDefinition.json"  # will be appended with _0.gpx, _1.gpx, ...
+file_path = "/Users/TommyChang/Desktop/networkDefinition.json"  # will be appended with _0.gpx, _1.gpx, ...
 # Entity
 cloud_server_count = 1
 cloud_server_first_id = 0  # the second cloud_server will have id cloud_server_first_id+1, etc.
-cloud_server_first_coord = {"lat": 24.05, "lng": 121.5}
+cloud_server_first_coord = {"lat": 0, "lng": 0}
 cloud_server_direction_coord = None
 cloud_server_bearing = 0 # if bearing is given, direction_coord will be ignored
 cloud_server_distance = 0
@@ -89,9 +89,9 @@ cloud_server_config = {
     "level": 2 # Not sure if would be used in SMSS
 }
 
-fog_server_count = 10
+fog_server_count = 1
 fog_server_first_id = 100
-fog_server_first_coord = {"lat": 24, "lng": 121.0005}
+fog_server_first_coord = {"lat": 0, "lng": 0}
 fog_server_direction_coord = None
 fog_server_bearing = 0  # if bearing is given, direction_coord will be ignored (0 is north, 180 is south)
 fog_server_distance = 0.6
@@ -102,12 +102,12 @@ fog_server_config = {
     "level": 0 # Note, network endpoints should be level 0
 }
 
-car_count = 10
+car_count = 32
 car_first_id = 10000
-car_first_coord = {"lat": 24, "lng": 121}
+car_first_coord = {"lat": 89, "lng": -179}
 car_direction_coord = None # to south
 car_bearing = 180.0 # if bearing is given, direction_coord will be ignored
-car_distance = 0.5
+car_distance = 0
 car_config = {
     "model": "car",
     "IPT": 1000, # doesn't matter
